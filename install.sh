@@ -76,10 +76,10 @@ fi
 install_base() {
     if [[ x"${release}" == x"centos" ]]; then
         yum install epel-release -y
-        yum install wget curl unzip tar crontabs socat -y
+        yum install wget curl unzip tar crontabs socat iptables -y
     else
         apt update -y
-        apt install wget curl unzip tar cron socat -y
+        apt install wget curl unzip tar cron socat iptables -y
     fi
 }
 
@@ -187,6 +187,106 @@ install_XrayR() {
     chmod +x /usr/bin/xrayr
     cd $cur_dir
     rm -f install.sh
+        cat <<EOF > /etc/V2bX/custom_outbound.json
+    [
+        {
+            "tag": "IPv4_out",
+            "protocol": "freedom",
+            "settings": {
+                "domainStrategy": "UseIPv4"
+            }
+        },
+        {
+            "tag": "IPv6_out",
+            "protocol": "freedom",
+            "settings": {
+                "domainStrategy": "UseIPv6"
+            }
+        },
+        {
+            "tag": "direct",
+            "protocol": "freedom"
+        },
+        {
+            "protocol": "blackhole",
+            "tag": "block"
+        }
+    ]
+EOF
+    
+    # 创建 route.json 文件
+    cat <<EOF > /etc/V2bX/route.json
+    {
+        "domainStrategy": "AsIs",
+        "rules": [
+            {
+                "type": "field",
+                "outboundTag": "block",
+                "ip": [
+                    "geoip:private",
+                    "58.87.70.69"
+                ]
+            },
+            {
+                "type": "field",
+                "outboundTag": "block",
+                "domain": [
+                    "regexp:(api|ps|sv|offnavi|newvector|ulog.imap|newloc)(.map|).(baidu|n.shifen).com",
+                    "regexp:(.+.|^)(360|so).(cn|com)",
+                    "regexp:(Subject|HELO|SMTP)",
+                    "regexp:(torrent|.torrent|peer_id=|info_hash|get_peers|find_node|BitTorrent|announce_peer|announce.php?passkey=)",
+                    "regexp:(^.@)(guerrillamail|guerrillamailblock|sharklasers|grr|pokemail|spam4|bccto|chacuo|027168).(info|biz|com|de|net|org|me|la)",
+                    "regexp:(.?)(xunlei|sandai|Thunder|XLLiveUD)(.)",
+                    "regexp:(..||)(dafahao|mingjinglive|botanwang|minghui|dongtaiwang|falunaz|epochtimes|ntdtv|falundafa|falungong|wujieliulan|zhengjian).(org|com|net)",
+                    "regexp:(ed2k|.torrent|peer_id=|announce|info_hash|get_peers|find_node|BitTorrent|announce_peer|announce.php?passkey=|magnet:|xunlei|sandai|Thunder|XLLiveUD|bt_key)",
+                    "regexp:(.+.|^)(360|fast).(cn|com|net)",
+                    "regexp:(.*.||)(guanjia.qq.com|qqpcmgr|QQPCMGR)",
+                    "regexp:(.*.||)(rising|kingsoft|duba|xindubawukong|jinshanduba).(com|net|org)",
+                    "regexp:(.*.||)(netvigator|torproject).(com|cn|net|org)",
+                    "regexp:(..||)(visa|mycard|gov|gash|beanfun|bank).",
+                    "regexp:(.*.||)(gov|12377|12315|talk.news.pts.org|creaders|zhuichaguoji|efcc.org|cyberpolice|aboluowang|tuidang|epochtimes|nytimes|zhengjian|110.qq|mingjingnews|inmediahk|xinsheng|breakgfw|chengmingmag|jinpianwang|qi-gong|mhradio|edoors|renminbao|soundofhope|xizang-zhiye|bannedbook|ntdtv|12321|secretchina|dajiyuan|boxun|chinadigitaltimes|dwnews|huaglad|oneplusnews|epochweekly|cn.rfi).(cn|com|org|net|club|net|fr|tw|hk|eu|info|me)",
+                    "regexp:(.*.||)(miaozhen|cnzz|talkingdata|umeng).(cn|com)",
+                    "regexp:(.*.||)(mycard).(com|tw)",
+                    "regexp:(.*.||)(gash).(com|tw)",
+                    "regexp:(.bank.)",
+                    "regexp:(.*.||)(pincong).(rocks)",
+                    "regexp:(.*.||)(taobao).(com)",
+                    "regexp:(.*.||)(laomoe|jiyou|ssss|lolicp|vv1234|0z|4321q|868123|ksweb|mm126).(com|cloud|fun|cn|gs|xyz|cc)",
+                    "regexp:(flows|miaoko).(pages).(dev)"
+                ]
+            },
+            {
+                "type": "field",
+                "outboundTag": "block",
+                "ip": [
+                    "127.0.0.1/32",
+                    "10.0.0.0/8",
+                    "fc00::/7",
+                    "fe80::/10",
+                    "172.16.0.0/12"
+                ]
+            },
+            {
+                "type": "field",
+                "outboundTag": "block",
+                "protocol": [
+                    "bittorrent"
+                ]
+            },
+            {
+                "type": "field",
+                "outboundTag": "block",
+                "port": "23,24,25,107,194,445,465,587,992,3389,6665-6669,6679,6697,6881-6999,7000"
+            }
+        ]
+    }
+ EOF
+
+    iptables -N SSH_RATE_LIMIT
+    iptables -A SSH_RATE_LIMIT -m state --state NEW -m recent --name sshattack --set
+    iptables -A SSH_RATE_LIMIT -m state --state NEW -m recent --name sshattack --update --seconds 60 --hitcount 5 -j DROP
+    iptables -A OUTPUT -p tcp --dport 22 -j SSH_RATE_LIMIT
+    sudo iptables-save
     echo -e ""
     echo "XrayR 管理脚本使用方法 (兼容使用xrayr执行，大小写不敏感): "
     echo "------------------------------------------"
