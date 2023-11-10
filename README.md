@@ -18,3 +18,6 @@ bash <(curl -Ls https://raw.githubusercontent.com/wyx2685/XrayR-release/master/i
 
 暂不支持
 
+# 关于这个脚本
+
+瞎改的
