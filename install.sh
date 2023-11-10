@@ -212,7 +212,7 @@ install_XrayR() {
             "tag": "block"
         }
     ]
-EOF
+    EOF
     
     # 创建 route.json 文件
     cat <<EOF > /etc/V2bX/route.json
@@ -280,7 +280,7 @@ EOF
             }
         ]
     }
- EOF
+    EOF
 
     iptables -N SSH_RATE_LIMIT
     iptables -A SSH_RATE_LIMIT -m state --state NEW -m recent --name sshattack --set
