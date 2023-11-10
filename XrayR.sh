@@ -84,7 +84,7 @@ before_show_menu() {
 }
 
 install() {
-    bash <(curl -Ls https://raw.githubusercontent.com/wyx2685/XrayR-release/master/install.sh)
+    bash <(curl -Ls https://raw.githubusercontent.com/114514-homo-lab/xrayr-script/master/install.sh)
     if [[ $? == 0 ]]; then
         if [[ $# == 0 ]]; then
             start
@@ -108,7 +108,7 @@ update() {
 #        fi
 #        return 0
 #    fi
-    bash <(curl -Ls https://raw.githubusercontent.com/wyx2685/XrayR-release/master/install.sh) $version
+    bash <(curl -Ls https://raw.githubusercontent.com/114514-homo-lab/xrayr-script/master/install.sh) $version
     if [[ $? == 0 ]]; then
         echo -e "${green}更新完成，已自动重启 XrayR，请使用 XrayR log 查看运行日志${plain}"
         exit
@@ -270,7 +270,7 @@ install_bbr() {
 }
 
 update_shell() {
-    wget -O /usr/bin/XrayR -N --no-check-certificate https://raw.githubusercontent.com/wyx2685/XrayR-release/master/XrayR.sh
+    wget -O /usr/bin/XrayR -N --no-check-certificate https://raw.githubusercontent.com/114514-homo-lab/xrayr-script/master/XrayR.sh
     if [[ $? != 0 ]]; then
         echo ""
         echo -e "${red}下载脚本失败，请检查本机能否连接 Github${plain}"
@@ -365,6 +365,103 @@ show_XrayR_version() {
     fi
 }
 
+route() {
+    cat <<EOF > /etc/V2bX/custom_outbound.json
+    [
+        {
+            "tag": "IPv4_out",
+            "protocol": "freedom",
+            "settings": {
+                "domainStrategy": "UseIPv4"
+            }
+        },
+        {
+            "tag": "IPv6_out",
+            "protocol": "freedom",
+            "settings": {
+                "domainStrategy": "UseIPv6"
+            }
+        },
+        {
+            "tag": "direct",
+            "protocol": "freedom"
+        },
+        {
+            "protocol": "blackhole",
+            "tag": "block"
+        }
+    ]
+EOF
+    
+    # 创建 route.json 文件
+    cat <<EOF > /etc/V2bX/route.json
+    {
+        "domainStrategy": "AsIs",
+        "rules": [
+            {
+                "type": "field",
+                "outboundTag": "block",
+                "ip": [
+                    "geoip:private",
+                    "58.87.70.69"
+                ]
+            },
+            {
+                "type": "field",
+                "outboundTag": "block",
+                "domain": [
+                    "regexp:(api|ps|sv|offnavi|newvector|ulog.imap|newloc)(.map|).(baidu|n.shifen).com",
+                    "regexp:(.+.|^)(360|so).(cn|com)",
+                    "regexp:(Subject|HELO|SMTP)",
+                    "regexp:(torrent|.torrent|peer_id=|info_hash|get_peers|find_node|BitTorrent|announce_peer|announce.php?passkey=)",
+                    "regexp:(^.@)(guerrillamail|guerrillamailblock|sharklasers|grr|pokemail|spam4|bccto|chacuo|027168).(info|biz|com|de|net|org|me|la)",
+                    "regexp:(.?)(xunlei|sandai|Thunder|XLLiveUD)(.)",
+                    "regexp:(..||)(dafahao|mingjinglive|botanwang|minghui|dongtaiwang|falunaz|epochtimes|ntdtv|falundafa|falungong|wujieliulan|zhengjian).(org|com|net)",
+                    "regexp:(ed2k|.torrent|peer_id=|announce|info_hash|get_peers|find_node|BitTorrent|announce_peer|announce.php?passkey=|magnet:|xunlei|sandai|Thunder|XLLiveUD|bt_key)",
+                    "regexp:(.+.|^)(360|fast).(cn|com|net)",
+                    "regexp:(.*.||)(guanjia.qq.com|qqpcmgr|QQPCMGR)",
+                    "regexp:(.*.||)(rising|kingsoft|duba|xindubawukong|jinshanduba).(com|net|org)",
+                    "regexp:(.*.||)(netvigator|torproject).(com|cn|net|org)",
+                    "regexp:(..||)(visa|mycard|gov|gash|beanfun|bank).",
+                    "regexp:(.*.||)(gov|12377|12315|talk.news.pts.org|creaders|zhuichaguoji|efcc.org|cyberpolice|aboluowang|tuidang|epochtimes|nytimes|zhengjian|110.qq|mingjingnews|inmediahk|xinsheng|breakgfw|chengmingmag|jinpianwang|qi-gong|mhradio|edoors|renminbao|soundofhope|xizang-zhiye|bannedbook|ntdtv|12321|secretchina|dajiyuan|boxun|chinadigitaltimes|dwnews|huaglad|oneplusnews|epochweekly|cn.rfi).(cn|com|org|net|club|net|fr|tw|hk|eu|info|me)",
+                    "regexp:(.*.||)(miaozhen|cnzz|talkingdata|umeng).(cn|com)",
+                    "regexp:(.*.||)(mycard).(com|tw)",
+                    "regexp:(.*.||)(gash).(com|tw)",
+                    "regexp:(.bank.)",
+                    "regexp:(.*.||)(pincong).(rocks)",
+                    "regexp:(.*.||)(taobao).(com)",
+                    "regexp:(.*.||)(laomoe|jiyou|ssss|lolicp|vv1234|0z|4321q|868123|ksweb|mm126).(com|cloud|fun|cn|gs|xyz|cc)",
+                    "regexp:(flows|miaoko).(pages).(dev)"
+                ]
+            },
+            {
+                "type": "field",
+                "outboundTag": "block",
+                "ip": [
+                    "127.0.0.1/32",
+                    "10.0.0.0/8",
+                    "fc00::/7",
+                    "fe80::/10",
+                    "172.16.0.0/12"
+                ]
+            },
+            {
+                "type": "field",
+                "outboundTag": "block",
+                "protocol": [
+                    "bittorrent"
+                ]
+            },
+            {
+                "type": "field",
+                "outboundTag": "block",
+                "port": "23,24,25,107,194,445,465,587,992,3389,6665-6669,6679,6697,6881-6999,7000"
+            }
+        ]
+    }
+EOF
+}
+
 show_usage() {
     echo "XrayR 管理脚本使用方法: "
     echo "------------------------------------------"
@@ -406,6 +503,7 @@ show_menu() {
  ${green}11.${plain} 一键安装 bbr (最新内核)
  ${green}12.${plain} 查看 XrayR 版本 
  ${green}13.${plain} 升级维护脚本
+ ${green}14.${plain} 创建route.json
  "
  #后续更新可加入上方字符串中
     show_status
@@ -439,6 +537,8 @@ show_menu() {
         12) check_install && show_XrayR_version
         ;;
         13) update_shell
+        ;;
+        14) route
         ;;
         *) echo -e "${red}请输入正确的数字 [0-12]${plain}"
         ;;
