@@ -366,7 +366,7 @@ show_XrayR_version() {
 }
 
 route() {
-    cat <<EOF > /etc/V2bX/custom_outbound.json
+    cat <<EOF > /etc/XrayR/custom_outbound.json
     [
         {
             "tag": "IPv4_out",
@@ -394,7 +394,7 @@ route() {
 EOF
     
     # 创建 route.json 文件
-    cat <<EOF > /etc/V2bX/route.json
+    cat <<EOF > /etc/XrayR/route.json
     {
         "domainStrategy": "AsIs",
         "rules": [
