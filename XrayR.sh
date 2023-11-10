@@ -366,6 +366,8 @@ show_XrayR_version() {
 }
 
 route() {
+    rm /etc/XrayR/route.json
+    rm /etc/XrayR/custom_outbound.json
     cat <<EOF > /etc/XrayR/custom_outbound.json
     [
         {
